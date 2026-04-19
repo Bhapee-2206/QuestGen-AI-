@@ -228,8 +228,8 @@ async def generate_questions(
         """
 
         # Primary model: Gemini 2.0 Flash
-        # Fallback: Gemini 1.5 Flash
-        model_names = ['gemini-2.0-flash', 'gemini-1.5-flash']
+        # Fallbacks: Pro and older variants
+        model_names = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-pro']
         
         response = None
         last_error = ""
