@@ -216,6 +216,24 @@ async def generate_questions(
         elif GEMINI_API_KEY:
             genai.configure(api_key=GEMINI_API_KEY)
 
+        prompt = f"""Generate {quantity} {difficulty} level questions based on this material: {context}. Types: {', '.join(type_list)}.
+        
+        Return exactly {quantity} questions in this JSON format:
+        {{
+          "title": "Topic Name",
+          "questions": [
+            {{
+              "id": 1,
+              "type": "Multiple Choice",
+              "question": "Question text?",
+              "options": ["Option A", "Option B", "Option C", "Option D"],
+              "answer": "Option A",
+              "difficulty": "{difficulty}"
+            }}
+          ]
+        }}
+        """
+
         # Try models in order of preference
         model_names = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash', 'gemini-1.5-pro']
         
