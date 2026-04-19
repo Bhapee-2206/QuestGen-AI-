@@ -11,4 +11,5 @@ pymongo
 dnspython
 PyJWT
 passlib[bcrypt]
+bcrypt==3.2.0
 email-validator
