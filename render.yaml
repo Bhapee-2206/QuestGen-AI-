@@ -27,7 +27,7 @@ services:
         fromService:
           type: web
           name: questgen-api
-          property: host
+          property: url
     routes:
       - type: rewrite
         source: /*
