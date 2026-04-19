@@ -1,35 +1,17 @@
 services:
-  # 1. Backend: FastAPI AI Service
+  # Combined App: Both Frontend and Backend on one URL
   - type: web
-    name: questgen-api
+    name: questgen-ai
     runtime: docker
     dockerContext: .
     dockerfilePath: Dockerfile
     envVars:
       - key: MONGO_URI
-        sync: false # Set manually in Render dashboard
+        sync: false
       - key: GEMINI_API_KEY
-        sync: false # Set manually in Render dashboard
+        sync: false
       - key: JWT_SECRET
-        sync: false # Set manually in Render dashboard
+        sync: false
       - key: PORT
         value: 8000
-    healthCheckPath: /
-
-  # 2. Frontend: React Application
-  - type: static
-    name: questgen-ui
-    runtime: node
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: frontend/dist
-    envVars:
-      - key: VITE_AI_SERVICE_URL
-        fromService:
-          type: web
-          name: questgen-api
-          property: url
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
+    healthCheckPath: /api/health

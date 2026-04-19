@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends, Header
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 import requests
@@ -113,8 +114,8 @@ def extract_text_from_bytes(file_bytes: bytes, filename: str):
         print(f"Extraction error: {e}")
         return ""
 
-# Endpoints
-@app.get("/")
+# Health Check
+@app.get("/api/health")
 def read_root():
     return {
         "status": "QuestGen AI Service Running",
@@ -243,6 +244,12 @@ async def delete_paper(paper_id: str, user_id: str = Depends(get_current_user)):
     if db is None: raise HTTPException(status_code=500, detail="Database not connected")
     db.papers.delete_one({"_id": ObjectId(paper_id), "user_id": user_id})
     return {"status": "deleted"}
+
+# Serve Frontend Static Files
+# This should be at the bottom so it doesn't shadow API routes
+static_path = os.path.join(os.path.dirname(__file__), "static")
+if os.path.exists(static_path):
+    app.mount("/", StaticFiles(directory=static_path, html=True), name="static")
 
 if __name__ == "__main__":
     import uvicorn
