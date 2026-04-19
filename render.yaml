@@ -4,6 +4,7 @@ services:
     name: questgen-api
     runtime: docker
     dockerContext: ai-service
+    dockerfilePath: ai-service/Dockerfile
     envVars:
       - key: MONGO_URI
         sync: false # Set manually in Render dashboard
