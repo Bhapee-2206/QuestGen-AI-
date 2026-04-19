@@ -1,4 +1,6 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends, Header
+from fastapi.responses import JSONResponse
+from starlette.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional
@@ -248,6 +250,18 @@ async def delete_paper(paper_id: str, user_id: str = Depends(get_current_user)):
 # Serve Frontend Static Files
 # This should be at the bottom so it doesn't shadow API routes
 static_path = os.path.join(os.path.dirname(__file__), "static")
+
+@app.exception_handler(404)
+async def not_found_handler(request, exc):
+    # If the request is for an API route, return 404
+    if request.url.path.startswith("/api/") or request.url.path.startswith("/auth/"):
+        return JSONResponse(status_code=404, content={"detail": "Not Found"})
+    # Otherwise, serve the frontend's index.html
+    index_file = os.path.join(static_path, "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
+    return JSONResponse(status_code=404, content={"detail": "Not Found"})
+
 if os.path.exists(static_path):
     app.mount("/", StaticFiles(directory=static_path, html=True), name="static")
 
