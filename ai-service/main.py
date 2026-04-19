@@ -227,11 +227,30 @@ async def generate_questions(
         }}
         """
 
-        response = active_client.models.generate_content(
-            model='gemini-1.5-flash',
-            contents=prompt,
-            config=types.GenerateContentConfig(response_mime_type="application/json"),
-        )
+        # Primary model: Gemini 2.0 Flash
+        # Fallback: Gemini 1.5 Flash
+        model_names = ['gemini-2.0-flash', 'gemini-1.5-flash']
+        
+        response = None
+        last_error = ""
+        
+        for m_name in model_names:
+            try:
+                print(f"DEBUG: Attempting with model {m_name}...")
+                response = active_client.models.generate_content(
+                    model=m_name,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(response_mime_type="application/json"),
+                )
+                if response: break
+            except Exception as e:
+                last_error = str(e)
+                print(f"DEBUG: Model {m_name} failed: {last_error}")
+                continue
+
+        if not response:
+            raise HTTPException(status_code=500, detail=f"AI Generation failed after trying all models. Last error: {last_error}")
+
         return json.loads(response.text)
 
     except Exception as e:
