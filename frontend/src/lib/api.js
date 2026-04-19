@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_AI_SERVICE_URL || 'http://localhost:8000';
+// Use empty string for relative paths when combined hosting is used
+const API_URL = import.meta.env.VITE_AI_SERVICE_URL || '';
 
 const api = axios.create({
   baseURL: API_URL,
