@@ -209,10 +209,26 @@ async def generate_questions(
                 })
             return {"title": "Generated Paper (Demo)", "questions": questions}
 
-        prompt = f"""Generate {quantity} {difficulty} level questions based on this material: {context}. Types: {', '.join(type_list)}. Return ONLY JSON: {{"title": "...", "questions": [{{"id": 1, "type": "...", "question": "...", "options": [...], "answer": "...", "difficulty": "{difficulty}"}}]}}"""
+        prompt = f"""Generate {quantity} {difficulty} level questions based on this material: {context}. Types: {', '.join(type_list)}.
+        
+        Return exactly {quantity} questions in this JSON format:
+        {{
+          "title": "Topic Name",
+          "questions": [
+            {{
+              "id": 1,
+              "type": "Multiple Choice",
+              "question": "What is...?",
+              "options": ["...", "...", "...", "..."],
+              "answer": "...",
+              "difficulty": "{difficulty}"
+            }}
+          ]
+        }}
+        """
 
         response = active_client.models.generate_content(
-            model='gemini-flash-latest',
+            model='gemini-1.5-flash',
             contents=prompt,
             config=types.GenerateContentConfig(response_mime_type="application/json"),
         )
