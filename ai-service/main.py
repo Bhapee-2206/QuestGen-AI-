@@ -17,8 +17,7 @@ from dotenv import load_dotenv
 from pymongo import MongoClient
 from bson import ObjectId
 from passlib.context import CryptContext
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 
 load_dotenv()
 
@@ -59,8 +58,13 @@ else:
 
 # Gemini Client
 client = None
-if os.getenv("GEMINI_API_KEY"):
-    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+    client = True  # SDK is configured globally
+    print("✅ Gemini AI configured successfully")
+else:
+    print("⚠️ No GEMINI_API_KEY found. AI features disabled.")
 
 # Models
 class UserRegister(BaseModel):
@@ -191,11 +195,8 @@ async def generate_questions(
         type_list = [t.strip() for t in question_types.split(',')]
         context = text[:20000]
 
-        active_client = client
-        if api_key:
-            active_client = genai.Client(api_key=api_key)
-        
-        if not active_client:
+        active_api_key = api_key or GEMINI_API_KEY
+        if not active_api_key:
             questions = []
             for i in range(quantity):
                 q_type = type_list[i % len(type_list)]
@@ -209,49 +210,41 @@ async def generate_questions(
                 })
             return {"title": "Generated Paper (Demo)", "questions": questions}
 
-        prompt = f"""Generate {quantity} {difficulty} level questions based on this material: {context}. Types: {', '.join(type_list)}.
-        
-        Return exactly {quantity} questions in this JSON format:
-        {{
-          "title": "Topic Name",
-          "questions": [
-            {{
-              "id": 1,
-              "type": "Multiple Choice",
-              "question": "What is...?",
-              "options": ["...", "...", "...", "..."],
-              "answer": "...",
-              "difficulty": "{difficulty}"
-            }}
-          ]
-        }}
-        """
+        # Configure with user api key if provided
+        if api_key:
+            genai.configure(api_key=api_key)
+        elif GEMINI_API_KEY:
+            genai.configure(api_key=GEMINI_API_KEY)
 
-        # Primary model: Gemini 2.0 Flash
-        # Fallbacks: Pro and older variants
-        model_names = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-pro']
+        # Try models in order of preference
+        model_names = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash', 'gemini-1.5-pro']
         
-        response = None
+        result = None
         last_error = ""
         
         for m_name in model_names:
             try:
-                print(f"DEBUG: Attempting with model {m_name}...")
-                response = active_client.models.generate_content(
-                    model=m_name,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(response_mime_type="application/json"),
+                print(f"DEBUG: Trying model {m_name}...")
+                model = genai.GenerativeModel(
+                    model_name=m_name,
+                    generation_config={"response_mime_type": "application/json"}
                 )
-                if response: break
+                response = model.generate_content(prompt)
+                result = json.loads(response.text)
+                print(f"DEBUG: Success with model {m_name}")
+                break
             except Exception as e:
                 last_error = str(e)
                 print(f"DEBUG: Model {m_name} failed: {last_error}")
                 continue
 
-        if not response:
-            raise HTTPException(status_code=500, detail=f"AI Generation failed after trying all models. Last error: {last_error}")
+        if result is None:
+            raise HTTPException(status_code=500, detail=f"AI Generation failed. Last error: {last_error}")
 
-        return json.loads(response.text)
+        if not result.get("title"):
+            result["title"] = "Academic Paper"
+
+        return result
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
