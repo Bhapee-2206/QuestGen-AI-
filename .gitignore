@@ -7,7 +7,6 @@ env.bak/
 venv.bak/
 .venv/
 bin/
-lib/
 include/
 
 # Environment files
