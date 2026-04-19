@@ -49,12 +49,12 @@ if MONGO_URI:
         # Force a call to check connectivity
         client_db.admin.command('ping')
         db = client_db.get_default_database()
-        print(f"✅ Successfully connected to MongoDB: {db.name}")
+        print(f"[OK] Successfully connected to MongoDB: {db.name}")
     except Exception as e:
-        print(f"❌ MongoDB connection error: {e}")
+        print(f"[ERROR] MongoDB connection error: {e}")
         print("Running in 'local-memory' mode (No database persistence)")
 else:
-    print("⚠️ No MONGO_URI found in environment. Database features disabled.")
+    print("[WARN] No MONGO_URI found in environment. Database features disabled.")
 
 # Gemini Client
 client = None
@@ -62,9 +62,9 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
     client = True  # SDK is configured globally
-    print("✅ Gemini AI configured successfully")
+    print("[OK] Gemini AI configured successfully")
 else:
-    print("⚠️ No GEMINI_API_KEY found. AI features disabled.")
+    print("[WARN] No GEMINI_API_KEY found. AI features disabled.")
 
 # Models
 class UserRegister(BaseModel):
